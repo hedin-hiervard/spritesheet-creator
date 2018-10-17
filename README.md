@@ -24,11 +24,30 @@ Work in progress:
 # Usage
 
 To install as a CLI tool:
+
 `yarn global add spritesheet-creator`
 
 Then you can generate some spritesheets for Godot! Just do:
-`spritesheet-creator generate_spritesheet godot3 <target_texture> <target_meta_folder> <paths to source files>...`
+
+`spritesheet-creator generate_spritesheet godot3 <target_texture> <target_meta_folder> <paths to source files>... --project-root <godot_project_root>`
+
+Please note, that target paths must be inside `<godot_project_root>` for the tool to properly generate Godot-specific `res://` paths.
 
 In a few seconds you will (hopefully) get a large texture and a bunch of `.tres` files. You can use them right out of the box as a replacement for the stand-alone sprites. 
 
 This will dramatically increase the performance of the large scenes due to the batch draw call optimisation and zero texture switching.
+
+Options:
+
+`--sort-method [height,width,area,maxside]`
+
+Before packing sprites are sorted by of these algorithms.
+
+--pack-algorithm [binpacking,growing-binpacking,horizontal,vertical]
+
+The algorithm to pack sprites. Highly recommended to use the default `growing-binpacking` one.
+
+`--width <width>                   
+--height <height>`
+
+The width and height of the texture for `binpacking` algorithm.

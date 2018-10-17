@@ -1,6 +1,7 @@
 {
   "presets": [ "env", "flow" ],
   "plugins": [
+  	  "transform-runtime",
   	  "transform-object-rest-spread",
 	  ["module-resolver",
 				{

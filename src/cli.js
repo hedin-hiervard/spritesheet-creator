@@ -1,5 +1,5 @@
+#!/usr/bin/env node
 // @flow
-
 import Youch from 'youch'
 import forTerminal from 'youch-terminal'
 import log from 'log.js'
