@@ -1,0 +1,60 @@
+// @flow
+import fs from 'fs-extra'
+import path from 'path'
+import Mustache from 'mustache'
+
+import type { Files } from 'types'
+import type { Logger } from 'Logger'
+
+function buildGodotResourcePath(projectRoot: string, relativePath: string) {
+    const split = relativePath.split(path.sep)
+    if(split[0].match(/^\./)) {
+        throw new Error('texture output path is outside project dir')
+    }
+    return `res://${split.join('/')}`
+}
+
+export default async function generateGodot3TextureData({
+    projectRoot,
+    files,
+    outputDataPath,
+    outputTexturePath,
+    log,
+}: {
+    projectRoot: string,
+    files: Files,
+    outputDataPath: string,
+    outputTexturePath: string,
+    log: Logger,
+}) {
+    log.info(`exporting godot3 data files to ${outputDataPath}`)
+    if(!fs.existsSync(outputDataPath)) {
+        fs.mkdirpSync(outputDataPath)
+    }
+    const stat = fs.statSync(outputDataPath)
+    if(!stat || !stat.isDirectory()) {
+        throw new Error(`output data path must be directory`)
+    }
+    const template = fs.readFileSync('templates/godot3.template', 'utf-8')
+    const godotTexturePath = buildGodotResourcePath(projectRoot, path.relative(projectRoot, outputTexturePath))
+    let wroteFiles = 0
+    for(const file of files) {
+        const parsed = path.parse(file.name)
+        const tresContent = Mustache.render(template, {
+            godotTexturePath,
+            x: file.real.x,
+            y: file.real.y,
+            width: file.real.width,
+            height: file.real.height,
+            margin: {
+                x: file.margin.left,
+                y: file.margin.up,
+                width: file.margin.left + file.margin.right,
+                height: file.margin.up + file.margin.down,
+            },
+        })
+        fs.writeFileSync(path.join(outputDataPath, parsed.name) + '.tres', tresContent)
+        wroteFiles++
+    }
+    log.info(`wrote ${wroteFiles} files`)
+}

@@ -1,16 +1,18 @@
 // @flow
 
-import fs from 'fs-extra'
-import Mustache from 'mustache'
 import Jimp from 'jimp'
 import glob from 'glob-promise'
+import _ from 'lodash'
 import path from 'path'
 
-import { pack } from 'packing/packing'
-import sorter from 'sorter/sorter'
+import packer from 'packer'
+import sorter from 'sorter'
+import smartCrop from 'smart_crop'
 
-import type { File, Files, Options } from 'types'
+import type { Files, Options } from 'types'
 import type { Logger } from 'Logger'
+
+export type InputPatterns = Array<string>;
 
 const DefaultOptions = {
     trim: true,
@@ -22,36 +24,40 @@ const DefaultOptions = {
     powerOfTwo: true,
 }
 
+type Stats = {
+    totalPixels: number;
+    totalBytes: number;
+};
+
 export default class SpritesheetGenerator {
     log: Logger;
     exportFormat: string;
-    inputFolder: string;
+    inputPatterns: InputPatterns;
     outputTexturePath: string;
     outputDataPath: string;
     files: Files;
     options: Options;
-    totalPixels: number;
-    totalBytes: number;
     texture: *;
+    stats: Stats;
 
     constructor({
         log,
         exportFormat,
-        inputFolder,
+        inputPatterns,
         outputTexturePath,
         outputDataPath,
         options,
     }: {
         log: Logger,
         exportFormat: string,
-        inputFolder: string,
+        inputPatterns: InputPatterns,
         outputTexturePath: string,
         outputDataPath: string,
         options?: Options,
     }) {
         this.log = log
         this.exportFormat = exportFormat
-        this.inputFolder = inputFolder
+        this.inputPatterns = inputPatterns
         this.outputTexturePath = outputTexturePath
         this.outputDataPath = outputDataPath
         this.options = options || {}
@@ -64,107 +70,160 @@ export default class SpritesheetGenerator {
         this.log.info(this.options)
     }
 
+    async generate() {
+        await this.getFileList()
+        await this.readImages()
+        this.printStats()
+        if(this.options.trim) {
+            this.trimImages()
+            this.printStats()
+        }
+        this.pad()
+        this.pack()
+        this.determineCanvasSize()
+        this.calcRealPositions()
+        await Promise.all([
+            this.generateTexture()
+                .then(() => this.saveTexture()),
+            this.generateTextureData(),
+        ])
+    }
+
+    formatPercentChange(oldValue: number, newValue: number): string {
+        const percentChange = newValue / oldValue * 100 - 100
+        return `${percentChange > 0 ? '+' : ''}${percentChange.toFixed(2)}%`
+    }
+
+    printStats() {
+        let stats = {
+            totalBytes: 0,
+            totalPixels: 0,
+        }
+        for(const file of this.files) {
+            const image = file.image
+            if(!image) continue
+            stats.totalBytes += image.bitmap.data.length
+            stats.totalPixels += image.bitmap.width * image.bitmap.height
+        }
+        let btChangeString = ''
+        let pxChangeString = ''
+        if(this.stats) {
+            btChangeString = ` (${this.formatPercentChange(this.stats.totalBytes, stats.totalBytes)})`
+            pxChangeString = ` (${this.formatPercentChange(this.stats.totalPixels, stats.totalPixels)})`
+        }
+        this.log.info(`${stats.totalBytes} total bytes${btChangeString}`)
+        this.log.info(`${stats.totalPixels} total pixels${pxChangeString}`)
+        this.stats = stats
+    }
+
+    async saveTexture() {
+        this.log.info(`saving texture to ${this.outputTexturePath}`)
+        await this.texture.write(this.outputTexturePath)
+        this.log.info(`done saving texture`)
+    }
+
     async getFileList() {
-        this.log.info(`getting file list from ${this.inputFolder}`)
-        this.files = (await glob(`${this.inputFolder}/**/*.png`))
-            .map(name => ({ name }))
+        this.log.info(`getting file list from ${this.inputPatterns.join(',')}`)
+
+        this.files = _.flatten(await Promise.all(
+            this.inputPatterns.map(pattern =>
+                glob(pattern)
+                    .then(files => files.map(name => ({
+                        name,
+                        padding: {
+                            left: 0,
+                            right: 0,
+                            up: 0,
+                            down: 0,
+                        },
+                        margin: {
+                            left: 0,
+                            right: 0,
+                            up: 0,
+                            down: 0,
+                        },
+                        padded: {
+                            x: 0,
+                            y: 0,
+                            width: 0,
+                            height: 0,
+                            area: 0,
+                        },
+                        real: {
+                            x: 0,
+                            y: 0,
+                            width: 0,
+                            height: 0,
+                            area: 0,
+                        },
+                    }))))
+        ))
         this.log.info(`got ${this.files.length} files`)
     }
 
     async readImages() {
         this.log.info(`reading files into memory`)
-        this.totalPixels = 0
-        this.totalBytes = 0
         await Promise.all(this.files.map(file =>
             Jimp.read(file.name)
                 .then(image => {
                     file.image = image
-                    this.totalBytes += image.bitmap.data.length
-                    this.totalPixels += image.bitmap.width * image.bitmap.height
+                    file.real = {
+                        width: image.bitmap.width,
+                        height: image.bitmap.height,
+                        x: 0,
+                        y: 0,
+                        area: image.bitmap.width * image.bitmap.height,
+                    }
+                })
+                .catch(err => {
+                    throw new Error(`couldn't read ${file.name}: ${err}`)
                 })
         )
         )
-        this.log.info(`${this.totalBytes} bytes read`)
-        this.log.info(`${this.totalPixels} pixels read`)
-    }
-
-    async generate() {
-        await this.getFileList()
-        await this.readImages()
-        if(this.options.trim) {
-            this.trimImages()
-        }
-        this.identify()
-        this.sort()
-        this.pack()
-        this.determineCanvasSize()
-        await this.generateTexture()
-
-        this.log.info(`saving texture to ${this.outputTexturePath}`)
-        await this.texture.write(this.outputTexturePath)
-        await this.generateTextureData()
     }
 
     trimImages() {
         this.log.info(`trimming images`)
-        let newPixels = 0
-        let newBytes = 0
         for(const file of this.files) {
             const image = file.image
             if(!image) continue
-            image.autocrop({
-                cropOnlyFrames: false,
-                tolerance: 0,
+            const { cropped: margin } = smartCrop({
+                image,
             })
-            newPixels += image.bitmap.width * image.bitmap.height
-            newBytes += image.bitmap.data.length
+            file.real.width = image.bitmap.width
+            file.real.height = image.bitmap.height
+            file.margin = margin
         }
-        const percentPx = 100 - newPixels / this.totalPixels * 100
-        const percentBt = 100 - newBytes / this.totalBytes * 100
-        this.log.info(`${newPixels} pixels after trim (${percentPx.toFixed(2)}% trimmed)`)
-        this.log.info(`${newBytes} bytes after trim (${percentBt.toFixed(2)}% trimmed)`)
-        this.totalBytes = newBytes
-        this.totalPixels = newPixels
     }
 
-    identify() {
-        this.log.info(`identifying files`)
+    pad() {
+        this.log.info(`padding files`)
         const padding = this.options.padding ? this.options.padding : 0
         for(const file of this.files) {
             const image = file.image
             if(!image) continue
-            file.width = image.bitmap.width + padding * 2
-            file.height = image.bitmap.height + padding * 2
 
-            // let forceTrimmed = false
+            file.padding = {
+                up: padding,
+                right: padding,
+                down: padding,
+                left: padding,
+            }
+
+            file.padded.width = file.real.width + padding * 2
+            file.padded.height = file.real.height + padding * 2
+
             if (this.options.divisibleByTwo) {
-                if (file.width & 1) {
-                    file.width += 1
-                    // forceTrimmed = true
+                if (file.padded.width & 1) {
+                    file.padded.width += 1
+                    file.padding.left++
                 }
-                if (file.height & 1) {
-                    file.height += 1
-                    // forceTrimmed = true
+                if (file.padded.height & 1) {
+                    file.padded.height += 1
+                    file.padding.up++
                 }
             }
-
-            file.area = file.width * file.height
-            file.trimmed = false
-            file.margin = {
-                x: 0,
-                y: 0,
-                width: 0,
-                height: 0,
-            }
-            // if (this.options.trim) {
-            //     file.trim = {
-            //         file.x = parseInt(rect[3], 10) - 1
-            //         file.y = parseInt(rect[4], 10) - 1
-            //         file.width = parseInt(rect[1], 10) - 2
-            //         file.height = parseInt(rect[2], 10) - 2
-
-            //     file.trimmed = forceTrimmed || (file.trim.width !== file.width - options.padding * 2 || file.trim.height !== file.height - options.padding * 2)
-            // }
+            file.padded.area = file.padded.width * file.padded.height
         }
     }
 
@@ -176,26 +235,32 @@ export default class SpritesheetGenerator {
         return powers
     }
 
-    sort() {
+    pack() {
         const sortMethod = this.options.sortMethod
         if(!sortMethod) {
-            throw new Error(`failed to sort`)
+            throw new Error(`sorting algorithm not found`)
         }
+
         this.log.info(`sorting files using '${sortMethod}' method`)
         sorter(sortMethod, this.files)
-    }
 
-    pack() {
         const algorithm = this.options.packAlgorithm
         if(!algorithm) {
-            throw new Error(`failed to pack`)
+            throw new Error(`packing algorithm not found`)
         }
         this.log.info(`packing using '${algorithm}' algorithm`)
-        pack({
+        packer({
             algorithm,
             files: this.files,
             options: this.options,
         })
+    }
+
+    calcRealPositions() {
+        for(const file of this.files) {
+            file.real.x = file.padded.x + file.padding.left
+            file.real.y = file.padded.y + file.padding.up
+        }
     }
 
     determineCanvasSize() {
@@ -234,51 +299,35 @@ export default class SpritesheetGenerator {
     }
 
     async generateTexture() {
-        this.log.info(`generating texture file`)
+        this.log.info(`generating texture`)
         this.texture = await new Promise((resolve, reject) => {
-            new Jimp(this.options.width, this.options.height, (err, image) => {
+            new Jimp(this.options.width, this.options.height, (err, image) => { // eslint-disable-line no-new
                 if(err) { reject(err); return }
                 resolve(image)
             })
         })
         for(const file of this.files) {
-            this.texture.composite(file.image, file.x, file.y)
+            this.texture.composite(file.image, file.real.x, file.real.y)
         }
-        this.log.info(`${this.texture.bitmap.data.length} bytes`)
-    }
-
-    async generateGodot3TextureData(projectRoot: string) {
-        if(!fs.existsSync(this.outputDataPath)) {
-            fs.mkdirpSync(this.outputDataPath)
-        }
-        const stat = fs.statSync(this.outputDataPath)
-        if(!stat || !stat.isDirectory()) {
-            throw new Error(`output data path must be directory`)
-        }
-        const template = fs.readFileSync('templates/godot3.template', 'utf-8')
-        const godotTexturePath = `res://${path.relative(projectRoot, this.outputTexturePath)}`
-        let wroteFiles = 0
-        for(const file of this.files) {
-            const parsed = path.parse(file.name)
-            const tresContent = Mustache.render(template, {
-                godotTexturePath,
-                ...file,
-            })
-            fs.writeFileSync(path.join(this.outputDataPath, parsed.base) + '.tres', tresContent)
-            wroteFiles++
-        }
-        this.log.info(`wrote ${wroteFiles} files`)
+        this.log.info(`generated texture of ${this.texture.bitmap.data.length} bytes`)
     }
 
     async generateTextureData() {
-        this.log.info(`will try to save texture data to '${this.outputDataPath}' with '${this.exportFormat}' export format`)
-        if(this.exportFormat === 'godot3') {
-            if(!this.options.projectRoot) {
-                throw new Error(`you must specify project root`)
-            }
-            await this.generateGodot3TextureData(this.options.projectRoot)
-        } else {
+        this.log.info(`save data to '${this.outputDataPath}' with '${this.exportFormat}' export format`)
+        this.log.info(`loading export plugin`)
+        let exportPlugin
+        try {
+            // $FlowFixMe
+            exportPlugin = require(path.join(__dirname, `data_output_plugins/${this.exportFormat}.js`)).default
+        } catch(err) {
             throw new Error(`unsupport texture export format: ${this.exportFormat}`)
         }
+        await exportPlugin({
+            projectRoot: this.options.projectRoot,
+            files: this.files,
+            outputDataPath: this.outputDataPath,
+            outputTexturePath: this.outputTexturePath,
+            log: this.log,
+        })
     }
 }

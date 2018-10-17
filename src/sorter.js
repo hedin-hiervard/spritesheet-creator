@@ -1,8 +1,14 @@
 // based on: http://codeincomplete.com/posts/2011/5/7/bin_packing/example/
 // @flow
-import type { Files, File } from 'types'
+import type { Files, File} from 'types'
 
-type Sorter = (a: File, b: File) => number;
+type Padded = {
+    width: number,
+    height: number,
+    area: number,
+}
+
+type Sorter = (a: Padded, b: Padded) => number;
 
 const Sorters: { [string]: Sorter } = {
     width: function (a, b) {
@@ -24,7 +30,7 @@ const Sorters: { [string]: Sorter } = {
 
 const MultiSorters: { [string]: Sorter } = {
     height: function (a, b) {
-        return msort(a, b, ['height', 'weight'])
+        return msort(a, b, ['height', 'width'])
     },
     width: function (a, b) {
         return msort(a, b, ['width', 'height'])
@@ -39,20 +45,20 @@ const MultiSorters: { [string]: Sorter } = {
 
 export type SortMethod = $Keys<typeof MultiSorters>;
 
-export default function run(method: SortMethod, files: Files) {
-    const filter = MultiSorters[method]
-    if (filter) {
-        files.sort(filter)
+export default function sort(method: SortMethod, files: Files) {
+    const sorter = MultiSorters[method]
+    if (!sorter) {
+        throw new Error(`unsupported sort method ${method}, supported methods: ${Object.keys(MultiSorters).join(',')}`)
     }
+    files.sort((file_a: File, file_b: File) => {
+        return sorter(file_a.padded, file_b.padded)
+    })
 }
 
 /* sort by multiple criteria */
-function msort(a: File, b: File, criteria: Array<$Keys<typeof Sorters>>) {
-    var diff, n
-
-    for (n = 0; n < criteria.length; n++) {
-        diff = Sorters[criteria[n]](a, b)
-
+function msort(a: Padded, b: Padded, criteria: Array<$Keys<typeof Sorters>>) {
+    for (const c of criteria) {
+        const diff = Sorters[c](a, b)
         if (diff !== 0) {
             return diff
         }

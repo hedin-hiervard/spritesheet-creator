@@ -32,7 +32,7 @@
     "fs-extra": "^1.0.0",
     "glob-promise": "^3.4.0",
     "jimp": "^0.5.4",
-    "lodash": "^4.17.10",
+    "lodash": "^4.17.11",
     "moment": "^2.22.2",
     "mustache": "~0.7.2",
     "pretty-format": "^23.6.0",

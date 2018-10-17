@@ -19,19 +19,26 @@ process.on('uncaughtException', err => {
 })
 
 program
-    .command('generate-spritesheet <export format> <input folder> <output texture path> <output data path>')
-    .option('--project <projectRoot>', 'project root')
-    .description('reads the folder of files and generates the spritesheet')
-    .action(async (exportFormat, inputFolder, outputTexturePath, outputDataPath, _, projectRoot) => {
-        log.debug(projectRoot)
+    .command('generate-spritesheet <exportFormat> <outputTexturePath> <outputDataPath> <inputPatterns...>')
+    .option('--project-root <projectRoot>')
+    .option('--sort-method <sortMethod>')
+    .option('--pack-algorithm <packAlgorithm>')
+    .option('--width <width>')
+    .option('--height <height>')
+    .description('reads the folder (or several folder) of files and generates the spritesheet')
+    .action(async (exportFormat, outputTexturePath, outputDataPath, inputPatterns, options) => {
         const generator = new SpritesheetGenerator({
             log,
             exportFormat,
-            inputFolder,
+            inputPatterns,
             outputTexturePath,
             outputDataPath,
             options: {
-                projectRoot: projectRoot,
+                projectRoot: options.projectRoot,
+                sortMethod: options.sortMethod,
+                packAlgorithm: options.packAlgorithm,
+                width: options.width,
+                height: options.height,
             },
         })
         await generator.generate()
