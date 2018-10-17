@@ -1,4 +1,4 @@
-import { StreamLogger } from 'Logger'
+import { StreamLogger } from 'ual'
 
 const log = new StreamLogger({
     stream: process.stdout,

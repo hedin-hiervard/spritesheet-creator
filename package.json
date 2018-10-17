@@ -7,7 +7,7 @@
     "spritesheet-creator": "./dist/cli/index.js"
   },
   "scripts": {
-    "test": "mocha test"
+    "start": "babel-node src/cli.js"
   },
   "dependencies": {
     "babel-cli": "^6.26.0",
@@ -33,9 +33,11 @@
     "glob-promise": "^3.4.0",
     "jimp": "^0.5.4",
     "lodash": "^4.17.11",
+    "logger": "https://github.com/hedin-hiervard/Logger",
     "moment": "^2.22.2",
     "mustache": "~0.7.2",
     "pretty-format": "^23.6.0",
+    "ual": "^0.1.0",
     "youch": "^2.0.9",
     "youch-terminal": "^1.0.0"
   },
