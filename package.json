@@ -1,6 +1,6 @@
 {
   "name": "spritesheet-creator",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Spritesheet Creator",
   "main": "dist/index.js",
   "bin": {
@@ -16,6 +16,7 @@
     "babel-eslint": "^8.2.6",
     "babel-plugin-module-resolver": "^3.1.1",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.7.0",
     "babel-preset-flow": "^6.23.0",
     "binpacking": "~0.0.1",
