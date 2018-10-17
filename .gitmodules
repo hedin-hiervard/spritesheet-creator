@@ -1,3 +1,0 @@
-[submodule "src/Logger"]
-	path = src/Logger
-	url = https://github.com/hedin-hiervard/Logger
