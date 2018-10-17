@@ -1,6 +1,6 @@
 {
   "name": "spritesheet-creator",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Spritesheet Creator",
   "main": "dist/index.js",
   "bin": {
@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "babel src --out-dir dist",
+    "prepublish": "yarn build",
     "start": "babel-node src/cli.js"
   },
   "dependencies": {
