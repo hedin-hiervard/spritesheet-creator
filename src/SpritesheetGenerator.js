@@ -129,6 +129,7 @@ export default class SpritesheetGenerator {
             this.inputPatterns.map(pattern =>
                 glob(pattern)
                     .then(files => files.map(name => ({
+                        pattern,
                         name,
                         padding: {
                             left: 0,

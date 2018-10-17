@@ -4,6 +4,7 @@ import type { SortMethod } from 'sorter'
 import type { PackAlgorithm } from 'packer'
 
 export type File = {
+    pattern: string,
     name: string,
     padded: {
         x: number,

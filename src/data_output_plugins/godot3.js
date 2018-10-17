@@ -5,6 +5,7 @@ import Mustache from 'mustache'
 
 import type { Files } from 'types'
 import type { Logger } from 'Logger'
+import type { InputPatterns } from 'SpriteSheetGenerator'
 
 function buildGodotResourcePath(projectRoot: string, relativePath: string) {
     const split = relativePath.split(path.sep)
@@ -12,6 +13,20 @@ function buildGodotResourcePath(projectRoot: string, relativePath: string) {
         throw new Error('texture output path is outside project dir')
     }
     return `res://${split.join('/')}`
+}
+
+function smartCreateTResName(pattern: string, filename: string): {
+    relPath: string,
+    base: string,
+} {
+    const parsed = path.parse(filename)
+    // find the non-wildcarded part of the pattern
+    const patternPrefix = pattern.split('*')[0]
+    const relPath = path.relative(patternPrefix, parsed.dir)
+    return {
+        relPath,
+        base: parsed.name,
+    }
 }
 
 export default async function generateGodot3TextureData({
@@ -39,7 +54,6 @@ export default async function generateGodot3TextureData({
     const godotTexturePath = buildGodotResourcePath(projectRoot, path.relative(projectRoot, outputTexturePath))
     let wroteFiles = 0
     for(const file of files) {
-        const parsed = path.parse(file.name)
         const tresContent = Mustache.render(template, {
             godotTexturePath,
             x: file.real.x,
@@ -53,7 +67,10 @@ export default async function generateGodot3TextureData({
                 height: file.margin.up + file.margin.down,
             },
         })
-        fs.writeFileSync(path.join(outputDataPath, parsed.name) + '.tres', tresContent)
+        const { relPath, base } = smartCreateTResName(file.pattern, file.name)
+        const dirPath = path.join(outputDataPath, relPath)
+        fs.mkdirpSync(dirPath)
+        fs.writeFileSync(path.join(dirPath, base) + '.tres', tresContent)
         wroteFiles++
     }
     log.info(`wrote ${wroteFiles} files`)
