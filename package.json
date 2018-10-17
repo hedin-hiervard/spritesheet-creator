@@ -1,0 +1,60 @@
+{
+  "name": "spritesheet-creator",
+  "version": "1.0",
+  "description": "Spritesheet Creator",
+  "main": "index.js",
+  "bin": {
+    "spritesheet-creator": "./dist/cli/index.js"
+  },
+  "scripts": {
+    "test": "mocha test"
+  },
+  "dependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-eslint": "^8.2.6",
+    "babel-plugin-module-resolver": "^3.1.1",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-flow": "^6.23.0",
+    "binpacking": "~0.0.1",
+    "commander": "^2.17.1",
+    "eslint": "^5.3.0",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-babel": "^5.1.0",
+    "eslint-plugin-flowtype": "^2.50.0",
+    "eslint-plugin-import": "^2.13.0",
+    "eslint-plugin-jest": "^21.20.2",
+    "eslint-plugin-json": "^1.2.1",
+    "eslint-plugin-node": "^7.0.1",
+    "eslint-plugin-promise": "^3.8.0",
+    "eslint-plugin-standard": "^3.1.0",
+    "flow-bin": "^0.79.1",
+    "fs-extra": "^1.0.0",
+    "glob-promise": "^3.4.0",
+    "jimp": "^0.5.4",
+    "lodash": "^4.17.10",
+    "moment": "^2.22.2",
+    "mustache": "~0.7.2",
+    "pretty-format": "^23.6.0",
+    "youch": "^2.0.9",
+    "youch-terminal": "^1.0.0"
+  },
+  "repository": "git@github.com:hedin-hiervard/spritesheet-creator.git",
+  "keywords": [
+    "spritesheet",
+    "texture",
+    "starling",
+    "sparrow",
+    "pixi.js",
+    "json",
+    "cocos2d",
+    "easel.js",
+    "generator"
+  ],
+  "author": "Hedin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hedin-hiervard/spritesheet-creator/issues"
+  },
+  "readme": "README.md"
+}
