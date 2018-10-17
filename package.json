@@ -1,6 +1,6 @@
 {
   "name": "spritesheet-creator",
-  "version": "0.1.9",
+  "version": "0.0.0-development",
   "description": "Spritesheet Creator",
   "main": "dist/index.js",
   "bin": {
@@ -9,7 +9,9 @@
   "scripts": {
     "build": "babel src --out-dir dist",
     "prepublish": "yarn build",
-    "start": "babel-node src/cli.js"
+    "start": "babel-node src/cli.js",
+    "semantic-release": "semantic-release",
+    "travis-deploy-once": "travis-deploy-once"
   },
   "dependencies": {
     "babel-cli": "^6.26.0",
@@ -43,7 +45,7 @@
     "youch": "^2.0.9",
     "youch-terminal": "^1.0.0"
   },
-  "repository": "git@github.com:hedin-hiervard/spritesheet-creator.git",
+  "repository": "https://github.com/hedin-hiervard/spritesheet-creator",
   "keywords": [
     "spritesheet",
     "texture",
@@ -60,5 +62,9 @@
   "bugs": {
     "url": "https://github.com/hedin-hiervard/spritesheet-creator/issues"
   },
-  "readme": "README.md"
+  "readme": "README.md",
+  "devDependencies": {
+    "semantic-release": "^15.10.3",
+    "travis-deploy-once": "^5.0.9"
+  }
 }
