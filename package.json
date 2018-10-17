@@ -1,10 +1,10 @@
 {
   "name": "spritesheet-creator",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Spritesheet Creator",
   "main": "dist/index.js",
   "bin": {
-    "spritesheet-creator": "./dist/index.js"
+    "spritesheet-creator": "./dist/cli.js"
   },
   "scripts": {
     "build": "babel src --out-dir dist",
