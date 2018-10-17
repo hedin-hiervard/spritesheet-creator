@@ -1,10 +1,8 @@
 // @flow
 export default function smartCrop({
     image,
-    tolerance = 0.0002, // percent of color difference tolerance (default value)
 }: {
     image: *,
-    tolerance?: number
 }): {
     cropped: {
         left: number,
@@ -43,8 +41,7 @@ export default function smartCrop({
             const colorXY = image.getPixelColor(x, y)
             const rgba2 = image.constructor.intToRGBA(colorXY)
 
-            if (image.constructor.colorDiff(rgba1, rgba2) > tolerance) {
-                // this pixel is too distant from the first one: abort this side scan
+            if (rgba2.a > 0) {
                 northPixelsToCrop -= leaveBorder
                 break north
             }
@@ -60,7 +57,7 @@ export default function smartCrop({
             const colorXY = image.getPixelColor(x, y)
             const rgba2 = image.constructor.intToRGBA(colorXY)
 
-            if (image.constructor.colorDiff(rgba1, rgba2) > tolerance) {
+            if (rgba2.a > 0) {
                 // this pixel is too distant from the first one: abort this side scan
                 eastPixelsToCrop -= leaveBorder
                 break east
@@ -81,7 +78,7 @@ export default function smartCrop({
             const colorXY = image.getPixelColor(x, y)
             const rgba2 = image.constructor.intToRGBA(colorXY)
 
-            if (image.constructor.colorDiff(rgba1, rgba2) > tolerance) {
+            if (rgba2.a > 0) {
                 // this pixel is too distant from the first one: abort this side scan
                 southPixelsToCrop -= leaveBorder
                 break south
@@ -102,7 +99,7 @@ export default function smartCrop({
             const colorXY = image.getPixelColor(x, y)
             const rgba2 = image.constructor.intToRGBA(colorXY)
 
-            if (image.constructor.colorDiff(rgba1, rgba2) > tolerance) {
+            if (rgba2.a > 0) {
                 // this pixel is too distant from the first one: abort this side scan
                 westPixelsToCrop -= leaveBorder
                 break west

@@ -5,7 +5,6 @@ import Mustache from 'mustache'
 
 import type { Files } from 'types'
 import type { Logger } from 'Logger'
-import type { InputPatterns } from 'SpriteSheetGenerator'
 
 function buildGodotResourcePath(projectRoot: string, relativePath: string) {
     const split = relativePath.split(path.sep)
@@ -42,6 +41,9 @@ export default async function generateGodot3TextureData({
     outputTexturePath: string,
     log: Logger,
 }) {
+    if(!projectRoot) {
+        throw new Error('projectRoot is required')
+    }
     log.info(`exporting godot3 data files to ${outputDataPath}`)
     if(!fs.existsSync(outputDataPath)) {
         fs.mkdirpSync(outputDataPath)
@@ -50,7 +52,7 @@ export default async function generateGodot3TextureData({
     if(!stat || !stat.isDirectory()) {
         throw new Error(`output data path must be directory`)
     }
-    const template = fs.readFileSync('templates/godot3.template', 'utf-8')
+    const template = fs.readFileSync(path.join(__dirname, '../../templates/godot3.template'), 'utf-8')
     const godotTexturePath = buildGodotResourcePath(projectRoot, path.relative(projectRoot, outputTexturePath))
     let wroteFiles = 0
     for(const file of files) {

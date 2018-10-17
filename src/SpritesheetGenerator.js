@@ -72,6 +72,10 @@ export default class SpritesheetGenerator {
 
     async generate() {
         await this.getFileList()
+        if(this.files.length === 0) {
+            this.log.warn('no files were found, finishing')
+            return
+        }
         await this.readImages()
         this.printStats()
         if(this.options.trim) {
