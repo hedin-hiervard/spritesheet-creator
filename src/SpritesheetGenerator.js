@@ -10,7 +10,7 @@ import sorter from 'sorter'
 import smartCrop from 'smart_crop'
 
 import type { Files, Options } from 'types'
-import type { Logger } from 'Logger'
+import type { Logger } from 'ual'
 
 export type InputPatterns = Array<string>;
 

@@ -4,7 +4,7 @@ import path from 'path'
 import Mustache from 'mustache'
 
 import type { Files } from 'types'
-import type { Logger } from 'Logger'
+import type { Logger } from 'ual'
 
 function buildGodotResourcePath(projectRoot: string, relativePath: string) {
     const split = relativePath.split(path.sep)

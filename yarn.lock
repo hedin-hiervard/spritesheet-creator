@@ -2983,14 +2983,6 @@ lodash@^4.17.10, lodash@^4.17.11, lodash@^4.17.4, lodash@^4.17.5, lodash@^4.2.0,
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.11.tgz#b39ea6229ef607ecd89e2c8df12536891cac9b8d"
   integrity sha512-cQKh8igo5QUhZ7lg38DYWAxMvjSAKG0A8wGSVimP07SIUEK2UO+arSRKbRZWtelMtN5V0Hkwh5ryOto/SshYIg==
 
-"logger@https://github.com/hedin-hiervard/Logger":
-  version "1.0.0"
-  resolved "https://github.com/hedin-hiervard/Logger#8f7d359c5f1188fe294addfbbc60d3682139fac2"
-  dependencies:
-    colors "^1.3.2"
-    moment "^2.22.2"
-    pretty-format "^23.6.0"
-
 loose-envify@^1.0.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/loose-envify/-/loose-envify-1.4.0.tgz#71ee51fa7be4caec1a63839f7e682d8132d30caf"
