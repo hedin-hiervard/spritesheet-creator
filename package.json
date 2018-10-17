@@ -4,7 +4,7 @@
   "description": "Spritesheet Creator",
   "main": "dist/index.js",
   "bin": {
-    "spritesheet-creator": "./dist/cli/index.js"
+    "spritesheet-creator": "./dist/index.js"
   },
   "scripts": {
     "build": "babel src --out-dir dist",
