@@ -11,7 +11,8 @@
     "prepublish": "yarn build",
     "start": "babel-node src/cli.js",
     "semantic-release": "semantic-release",
-    "travis-deploy-once": "travis-deploy-once"
+    "travis-deploy-once": "travis-deploy-once",
+    "test": "true"
   },
   "dependencies": {
     "babel-cli": "^6.26.0",
