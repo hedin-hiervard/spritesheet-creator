@@ -12,7 +12,8 @@
     "start": "babel-node src/cli.js",
     "semantic-release": "semantic-release",
     "travis-deploy-once": "travis-deploy-once",
-    "test": "true"
+    "test": "true",
+    "commit": "git-cz"
   },
   "dependencies": {
     "babel-cli": "^6.26.0",
@@ -65,7 +66,14 @@
   },
   "readme": "README.md",
   "devDependencies": {
+    "commitizen": "^3.0.2",
+    "cz-conventional-changelog": "^2.1.0",
     "semantic-release": "^15.10.3",
     "travis-deploy-once": "^5.0.9"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
