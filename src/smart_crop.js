@@ -1,4 +1,10 @@
 // @flow
+
+/**
+ * crops the fully transparent pixels from all borders of the image
+ * @param  {Jimp} options.image Jimp image
+ * @return {Object} cropped.left, .right, .up, .down - amount of pixels cropped
+ */
 export default function smartCrop({
     image,
 }: {
@@ -15,119 +21,106 @@ export default function smartCrop({
     const h = image.bitmap.height
     const minPixelsPerSide = 1 // to avoid cropping completely the image, resulting in an invalid 0 sized image
 
-    let leaveBorder = 0 // Amount of pixels in border to leave
+    let leftPixelsToCrop = 0
+    let upPixelsToCrop = 0
+    let downPixelsToCrop = 0
+    let rightPixelsToCrop = 0
 
-    /**
-     * All borders must be of the same color as the top left pixel, to be cropped.
-     * It should be possible to crop borders each with a different color,
-     * but since there are many ways for corners to intersect, it would
-     * introduce unnecessary complexity to the algorithm.
-     */
-
-    // scan each side for same color borders
-    let colorTarget = image.getPixelColor(0, 0) // top left pixel color is the target color
-    const rgba1 = image.constructor.intToRGBA(colorTarget)
-
-    // for north and east sides
-    let northPixelsToCrop = 0
-    let eastPixelsToCrop = 0
-    let southPixelsToCrop = 0
-    let westPixelsToCrop = 0
-
-    // north side (scan rows from north to south)
-    colorTarget = image.getPixelColor(0, 0)
-    north: for (let y = 0; y < h - minPixelsPerSide; y++) {
+    // up side
+    let b = false
+    for (let y = 0; y < h - minPixelsPerSide; y++) {
         for (let x = 0; x < w; x++) {
             const colorXY = image.getPixelColor(x, y)
-            const rgba2 = image.constructor.intToRGBA(colorXY)
-
-            if (rgba2.a > 0) {
-                northPixelsToCrop -= leaveBorder
-                break north
+            const rgba = image.constructor.intToRGBA(colorXY)
+            if (rgba.a > 0) {
+                b = true
+                upPixelsToCrop = y
+                break
             }
         }
-        // this row contains all pixels with the same color: increment this side pixels to crop
-        northPixelsToCrop++
+        if(b) break
     }
 
-    // east side (scan columns from east to west)
-    colorTarget = image.getPixelColor(w, 0)
-    east: for (let x = 0; x < w - minPixelsPerSide; x++) {
-        for (let y = 0 + northPixelsToCrop; y < h; y++) {
+    // left side
+    b = false
+    for (let x = 0; x < w - minPixelsPerSide; x++) {
+        for (let y = upPixelsToCrop; y < h; y++) {
             const colorXY = image.getPixelColor(x, y)
-            const rgba2 = image.constructor.intToRGBA(colorXY)
+            const rgba = image.constructor.intToRGBA(colorXY)
 
-            if (rgba2.a > 0) {
-                // this pixel is too distant from the first one: abort this side scan
-                eastPixelsToCrop -= leaveBorder
-                break east
+            if (rgba.a > 0) {
+                b = true
+                leftPixelsToCrop = x
+                break
             }
         }
-        // this column contains all pixels with the same color: increment this side pixels to crop
-        eastPixelsToCrop++
+        if(b) break
     }
 
-    // south side (scan rows from south to north)
-    colorTarget = image.getPixelColor(0, h)
-    south: for (
+    // down side
+    b = false
+    for (
         let y = h - 1;
-        y >= northPixelsToCrop + minPixelsPerSide;
+        y >= upPixelsToCrop + minPixelsPerSide;
         y--
     ) {
-        for (let x = w - eastPixelsToCrop - 1; x >= 0; x--) {
+        for (let x = w - 1; x > leftPixelsToCrop; x--) {
             const colorXY = image.getPixelColor(x, y)
-            const rgba2 = image.constructor.intToRGBA(colorXY)
+            const rgba = image.constructor.intToRGBA(colorXY)
 
-            if (rgba2.a > 0) {
-                // this pixel is too distant from the first one: abort this side scan
-                southPixelsToCrop -= leaveBorder
-                break south
+            if (rgba.a > 0) {
+                b = true
+                downPixelsToCrop = h - y - 1
+                break
             }
         }
-        // this row contains all pixels with the same color: increment this side pixels to crop
-        southPixelsToCrop++
+        if(b) break
     }
 
-    // west side (scan columns from west to east)
-    colorTarget = image.getPixelColor(w, h)
-    west: for (
+    // right side
+    b = false
+    for (
         let x = w - 1;
-        x >= 0 + eastPixelsToCrop + minPixelsPerSide;
+        x >= 0 + leftPixelsToCrop + minPixelsPerSide;
         x--
     ) {
-        for (let y = h - 1; y >= 0 + northPixelsToCrop; y--) {
+        for (let y = h - downPixelsToCrop; y > upPixelsToCrop; y--) {
             const colorXY = image.getPixelColor(x, y)
-            const rgba2 = image.constructor.intToRGBA(colorXY)
+            const rgba = image.constructor.intToRGBA(colorXY)
 
-            if (rgba2.a > 0) {
-                // this pixel is too distant from the first one: abort this side scan
-                westPixelsToCrop -= leaveBorder
-                break west
+            if (rgba.a > 0) {
+                b = true
+                rightPixelsToCrop = w - x - 1
+                break
             }
         }
-        // this column contains all pixels with the same color: increment this side pixels to crop
-        westPixelsToCrop++
+        if(b) break
     }
 
     const widthOfRemainingPixels =
-        w - (westPixelsToCrop + eastPixelsToCrop)
+        w - (leftPixelsToCrop + rightPixelsToCrop)
     const heightOfRemainingPixels =
-        h - (southPixelsToCrop + northPixelsToCrop)
+        h - (upPixelsToCrop + downPixelsToCrop)
+
+    console.log(`${leftPixelsToCrop}`)
+    console.log(`${rightPixelsToCrop}`)
+    console.log(`${upPixelsToCrop}`)
+    console.log(`${downPixelsToCrop}`)
 
     // do the real crop
     image.crop(
-        eastPixelsToCrop,
-        northPixelsToCrop,
+        leftPixelsToCrop,
+        upPixelsToCrop,
         widthOfRemainingPixels,
         heightOfRemainingPixels
     )
 
     return {
         cropped: {
-            up: northPixelsToCrop,
-            down: southPixelsToCrop,
-            right: westPixelsToCrop,
-            left: eastPixelsToCrop,
+            up: upPixelsToCrop,
+            down: downPixelsToCrop,
+            right: rightPixelsToCrop,
+            left: leftPixelsToCrop,
         },
     }
 }
