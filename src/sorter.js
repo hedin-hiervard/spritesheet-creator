@@ -1,6 +1,6 @@
 // based on: http://codeincomplete.com/posts/2011/5/7/bin_packing/example/
 // @flow
-import type { Files, File} from 'types'
+import type { Files, File } from 'types'
 
 type Padded = {
     width: number,

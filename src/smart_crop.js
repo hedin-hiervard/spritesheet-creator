@@ -102,11 +102,6 @@ export default function smartCrop({
     const heightOfRemainingPixels =
         h - (upPixelsToCrop + downPixelsToCrop)
 
-    console.log(`${leftPixelsToCrop}`)
-    console.log(`${rightPixelsToCrop}`)
-    console.log(`${upPixelsToCrop}`)
-    console.log(`${downPixelsToCrop}`)
-
     // do the real crop
     image.crop(
         leftPixelsToCrop,
