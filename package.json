@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "babel src --out-dir dist",
-    "prepublish": "build",
+    "prepublish": "yarn build",
     "start": "babel-node src/cli.js",
     "semantic-release": "semantic-release",
     "travis-deploy-once": "travis-deploy-once",
