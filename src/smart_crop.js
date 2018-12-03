@@ -64,10 +64,9 @@ export default function smartCrop({
         y >= upPixelsToCrop + minPixelsPerSide;
         y--
     ) {
-        for (let x = w - 1; x > leftPixelsToCrop; x--) {
+        for (let x = w - 1; x >= leftPixelsToCrop; x--) {
             const colorXY = image.getPixelColor(x, y)
             const rgba = image.constructor.intToRGBA(colorXY)
-
             if (rgba.a > 0) {
                 b = true
                 downPixelsToCrop = h - y - 1
@@ -84,7 +83,7 @@ export default function smartCrop({
         x >= 0 + leftPixelsToCrop + minPixelsPerSide;
         x--
     ) {
-        for (let y = h - downPixelsToCrop; y > upPixelsToCrop; y--) {
+        for (let y = h - downPixelsToCrop; y >= upPixelsToCrop; y--) {
             const colorXY = image.getPixelColor(x, y)
             const rgba = image.constructor.intToRGBA(colorXY)
 
