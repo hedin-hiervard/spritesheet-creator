@@ -192,15 +192,12 @@ export default class SpritesheetGenerator {
         for(const file of this.files) {
             const image = file.image
             if(!image) continue
-            this.log.debug(file.name)
-            this.log.debug(`before trim: ${image.bitmap.width}x${image.bitmap.height}`)
             const { cropped: margin } = smartCrop({
                 image,
             })
             file.real.width = image.bitmap.width
             file.real.height = image.bitmap.height
             file.real.area = file.real.width * file.real.height
-            this.log.debug(`after trim: ${image.bitmap.width}x${image.bitmap.height}`)
             file.margin = margin
         }
     }
