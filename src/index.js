@@ -1,3 +1,2 @@
-import SpritesheetGenerator from 'SpritesheetGenerator'
-
-export default SpritesheetGenerator
+export { default } from 'SpritesheetGenerator'
+export { default as smartCrop } from 'smart-crop'
