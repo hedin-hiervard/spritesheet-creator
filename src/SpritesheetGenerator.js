@@ -32,7 +32,6 @@ type Stats = {
 export default class SpritesheetGenerator {
     log: Logger;
     exportFormat: string;
-    inputPatterns: InputPatterns;
     outputTexturePath: string;
     outputDataPath: string;
     files: Files;
@@ -43,21 +42,18 @@ export default class SpritesheetGenerator {
     constructor({
         log,
         exportFormat,
-        inputPatterns,
         outputTexturePath,
         outputDataPath,
         options,
     }: {
         log: Logger,
         exportFormat: string,
-        inputPatterns: InputPatterns,
         outputTexturePath: string,
         outputDataPath: string,
         options?: Options,
     }) {
         this.log = log
         this.exportFormat = exportFormat
-        this.inputPatterns = inputPatterns
         this.outputTexturePath = outputTexturePath
         this.outputDataPath = outputDataPath
         this.options = options || {}
@@ -70,13 +66,7 @@ export default class SpritesheetGenerator {
         this.log.info(this.options)
     }
 
-    async generate() {
-        await this.getFileList()
-        if(this.files.length === 0) {
-            this.log.warn('no files were found, finishing')
-            return
-        }
-        await this.readImages()
+    async generateFurther(): Promise<Files> {
         this.printStats()
         if(this.options.trim) {
             this.trimImages()
@@ -91,6 +81,60 @@ export default class SpritesheetGenerator {
                 .then(() => this.saveTexture()),
             this.generateTextureData(),
         ])
+        return this.files
+    }
+
+    async generateFromMemory(files: Files): Promise<Files> {
+        this.files = files
+        for(const file of this.files) {
+            if(!file.image) {
+                throw new Error(`file is missing image`)
+            }
+            file.image = await Jimp.create({
+                data: file.image.bitmap.data,
+                width: file.image.bitmap.width,
+                height: file.image.bitmap.height,
+            })
+            file.padding = {
+                left: 0,
+                right: 0,
+                up: 0,
+                down: 0,
+            }
+            file.margin = {
+                left: 0,
+                right: 0,
+                up: 0,
+                down: 0,
+            }
+            file.padded = {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+                area: 0,
+            }
+            file.real = {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+                area: 0,
+            }
+        }
+        return this.generateFurther()
+    }
+
+    async generateFromFiles(
+        inputPatterns: InputPatterns
+    ): Promise<Files> {
+        await this.getFileList(inputPatterns)
+        if(this.files.length === 0) {
+            this.log.warn('no files were found, finishing')
+            return []
+        }
+        await this.readImages()
+        return this.generateFurther()
     }
 
     formatPercentChange(oldValue: number, newValue: number): string {
@@ -121,16 +165,20 @@ export default class SpritesheetGenerator {
     }
 
     async saveTexture() {
+        if(!this.outputTexturePath) {
+            this.log.info(`skipping texture save`)
+            return
+        }
         this.log.info(`saving texture to ${this.outputTexturePath}`)
         await this.texture.write(this.outputTexturePath)
         this.log.info(`done saving texture`)
     }
 
-    async getFileList() {
-        this.log.info(`getting file list from ${this.inputPatterns.join(',')}`)
+    async getFileList(inputPatterns: InputPatterns) {
+        this.log.info(`getting file list from ${inputPatterns.join(',')}`)
 
         this.files = _.flatten(await Promise.all(
-            this.inputPatterns.map(pattern =>
+            inputPatterns.map(pattern =>
                 glob(pattern)
                     .then(files => files.map(name => ({
                         pattern,
@@ -306,12 +354,7 @@ export default class SpritesheetGenerator {
 
     async generateTexture() {
         this.log.info(`generating texture`)
-        this.texture = await new Promise((resolve, reject) => {
-            new Jimp(this.options.width, this.options.height, (err, image) => { // eslint-disable-line no-new
-                if(err) { reject(err); return }
-                resolve(image)
-            })
-        })
+        this.texture = await Jimp.create(this.options.width, this.options.height)
         for(const file of this.files) {
             this.texture.composite(file.image, file.real.x, file.real.y)
         }
