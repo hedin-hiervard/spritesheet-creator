@@ -7,7 +7,6 @@
     "babel",
     "flowtype"
   ],
-  "parser": "babel-eslint",
   "extends": [
     "standard",
     "plugin:flowtype/recommended"
