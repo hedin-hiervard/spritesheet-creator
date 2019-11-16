@@ -1,6 +1,6 @@
 {
   "name": "spritesheet-creator",
-  "version": "0.0.0-development",
+  "version": "2.0.1",
   "description": "Spritesheet Creator",
   "main": "dist/index.js",
   "bin": {
